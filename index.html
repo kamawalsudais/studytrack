@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="A simple, focused assignment tracker for school.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>StudyTrack — Assignment Planner</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220; --panel: #121d2e; --panel2: #18263a;
+      --text: #edf3fb; --muted: #9aabc0; --line: #28384e;
+      --accent: #8b9cff; --accent2: #b9c4ff; --green: #49d6a1;
+      --yellow: #ffd166; --red: #ff7b86;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: radial-gradient(circle at top right,#1b2b4a 0,transparent 35%),var(--bg);
+      color: var(--text); font: 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    }
+    button,input,select,textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1100px,100% - 32px); margin: 0 auto; padding: 34px 0 60px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .logo { width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#9caaff,#6e7ff0);display:grid;place-items:center;color:#101827;font-size:23px;font-weight:900; }
+    h1 { font-size:clamp(23px,4vw,31px); margin:0; letter-spacing:-.8px; }
+    .subtitle { color:var(--muted);font-size:14px;margin-top:2px; }
+    .today { color:var(--muted);font-size:13px;text-align:right; }
+    .hero { display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:18px; }
+    .panel,.stat { background:rgba(18,29,46,.92);border:1px solid var(--line);border-radius:20px; }
+    .welcome { padding:24px; }
+    .welcome h2 { margin:0 0 6px;font-size:23px; }
+    .welcome p { margin:0;color:var(--muted); }
+    .progress-wrap { margin-top:20px; }
+    .progress-label { display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:8px; }
+    .bar { height:10px;border-radius:99px;background:#26364d;overflow:hidden; }
+    .bar > span { display:block;height:100%;width:0;background:linear-gradient(90deg,#7e8fff,#49d6a1);border-radius:99px;transition:width .25s; }
+    .stats { display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }
+    .stat { padding:17px 14px;display:flex;flex-direction:column;justify-content:center; }
+    .stat strong { font-size:27px;letter-spacing:-1px; }
+    .stat span { color:var(--muted);font-size:12px; }
+    .main-grid { display:grid;grid-template-columns: minmax(280px,.85fr) minmax(0,1.5fr);gap:16px;align-items:start; }
+    .form-panel,.list-panel { padding:21px; }
+    .section-title { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 16px;font-size:18px; }
+    label { display:block;color:var(--muted);font-size:13px;margin:12px 0 6px; }
+    input,select,textarea { width:100%;background:#0d1726;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:11px 12px;outline:none; }
+    input:focus,select:focus,textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px #8b9cff22; }
+    textarea { resize:vertical;min-height:72px; }
+    .two { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+    .primary { width:100%;margin-top:17px;border:0;border-radius:12px;padding:12px 16px;background:var(--accent);color:#101827;font-weight:750; }
+    .primary:hover { background:var(--accent2); }
+    .toolbar { display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px; }
+    .toolbar input { flex:1;min-width:130px; }
+    .toolbar select { width:auto;min-width:130px; }
+    .assignment-list { display:grid;gap:10px; }
+    .assignment { display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px; }
+    .check { width:21px;height:21px;accent-color:var(--green);margin-top:3px; }
+    .assignment h3 { font-size:15px;margin:0 0 4px;overflow-wrap:anywhere; }
+    .assignment p { margin:0;color:var(--muted);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere; }
+    .meta { display:flex;gap:7px;flex-wrap:wrap;margin-top:8px; }
+    .pill { font-size:11px;padding:3px 8px;border-radius:99px;background:#26364d;color:#c5d2e4; }
+    .pill.overdue { color:#ffb3ba;background:#4a2631; }
+    .pill.soon { color:#ffe2a0;background:#493a24; }
+    .pill.done { color:#9af0cd;background:#1d443d; }
+    .actions { display:flex;gap:5px; }
+    .icon-btn { border:1px solid var(--line);background:#111c2c;color:var(--muted);border-radius:9px;padding:6px 8px; }
+    .icon-btn:hover { color:var(--text);border-color:var(--accent); }
+    .completed h3 { text-decoration:line-through;color:#9aabc0; }
+    .empty { text-align:center;color:var(--muted);padding:34px 12px;border:1px dashed var(--line);border-radius:14px; }
+    .footer { text-align:center;color:#71839b;font-size:12px;margin-top:22px; }
+    @media(max-width:760px) {
+      .shell { width:min(100% - 22px,620px);padding-top:22px; }
+      header { align-items:flex-start; }
+      .today { max-width:110px; }
+      .hero { grid-template-columns:1fr; }
+      .main-grid { grid-template-columns:1fr; }
+      .stats { gap:8px; }
+      .stat { padding:13px 10px; }
+      .stat strong { font-size:23px; }
+      .form-panel,.list-panel { padding:17px; }
+    }
+    @media(max-width:390px) {
+      .two { grid-template-columns:1fr;gap:0; }
+      .assignment { grid-template-columns:auto 1fr; }
+      .actions { grid-column:2; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo">✓</div>
+        <div><h1>StudyTrack</h1><div class="subtitle">Your schoolwork, under control.</div></div>
+      </div>
+      <div class="today" id="today"></div>
+    </header>
+
+    <section class="hero">
+      <div class="panel welcome">
+        <h2>Small steps. Big progress.</h2>
+        <p>Keep every assignment in one place and know what to work on next.</p>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Overall progress</span><strong id="progressText">0% complete</strong></div>
+          <div class="bar"><span id="progressBar"></span></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong id="totalCount">0</strong><span>Total tasks</span></div>
+        <div class="stat"><strong id="leftCount">0</strong><span>Still to do</span></div>
+        <div class="stat"><strong id="doneCount">0</strong><span>Completed</span></div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <form class="panel form-panel" id="assignmentForm">
+        <h2 class="section-title"><span id="formHeading">＋ Add an assignment</span></h2>
+        <label for="title">Assignment name *</label>
+        <input id="title" maxlength="100" placeholder="e.g. History essay" required>
+        <div class="two">
+          <div><label for="subject">Class / subject</label><input id="subject" maxlength="50" placeholder="e.g. History"></div>
+          <div><label for="dueDate">Due date *</label><input id="dueDate" type="date" required></div>
+        </div>
+        <div class="two">
+          <div><label for="priority">Priority</label><select id="priority"><option>Medium</option><option>High</option><option>Low</option></select></div>
+          <div><label for="category">Type</label><select id="category"><option>Homework</option><option>Project</option><option>Essay</option><option>Study / Exam</option><option>Other</option></select></div>
+        </div>
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" maxlength="500" placeholder="What do you need to do?"></textarea>
+        <button class="primary" id="submitBtn" type="submit">Add assignment</button>
+        <button class="icon-btn" id="cancelEdit" type="button" style="display:none;width:100%;margin-top:8px;">Cancel editing</button>
+      </form>
+
+      <section class="panel list-panel">
+        <h2 class="section-title"><span>Your assignments</span><span class="pill" id="visibleCount">0 shown</span></h2>
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Search assignments…">
+          <select id="filter">
+            <option value="all">All tasks</option>
+            <option value="active">To do</option>
+            <option value="completed">Completed</option>
+            <option value="upcoming">Upcoming (7 days)</option>
+            <option value="overdue">Overdue</option>
+          </select>
+          <select id="sort">
+            <option value="due">Due date</option>
+            <option value="priority">Priority</option>
+            <option value="newest">Recently added</option>
+          </select>
+        </div>
+        <div class="assignment-list" id="assignmentList"></div>
+      </section>
+    </section>
+    <div class="footer">Your assignments are saved on this device. Add this page to your phone's home screen for an app-like experience.</div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "studytrack.assignments.v1";
+    let assignments = loadAssignments();
+    let editingId = null;
+    const $ = (id) => document.getElementById(id);
+
+    function loadAssignments() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments)); }
+    function dateOnly(date) { return new Date(date + "T00:00:00"); }
+    function todayString() {
+      const d = new Date(); const offset = d.getTimezoneOffset(); d.setMinutes(d.getMinutes() - offset);
+      return d.toISOString().slice(0,10);
+    }
+    function escapeHtml(value="") {
+      return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+    function formatDate(value) {
+      if (!value) return "No due date";
+      return dateOnly(value).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+    }
+    function dueStatus(item) {
+      if (item.completed) return {text:"Completed",cls:"done"};
+      const diff = Math.round((dateOnly(item.dueDate)-dateOnly(todayString()))/86400000);
+      if (diff < 0) return {text:`${Math.abs(diff)} day${diff === -1 ? "" : "s"} overdue`,cls:"overdue"};
+      if (diff === 0) return {text:"Due today",cls:"soon"};
+      if (diff <= 2) return {text:"Due soon",cls:"soon"};
+      return {text:`Due ${formatDate(item.dueDate)}`,cls:""};
+    }
+    function render() {
+      const total = assignments.length;
+      const done = assignments.filter(a=>a.completed).length;
+      const left = total-done;
+      const percent = total ? Math.round(done/total*100) : 0;
+      $("totalCount").textContent=total; $("leftCount").textContent=left; $("doneCount").textContent=done;
+      $("progressText").textContent=`${percent}% complete`; $("progressBar").style.width=percent+"%";
+      const query=$("search").value.trim().toLowerCase(), filter=$("filter").value, sort=$("sort").value;
+      let shown=assignments.filter(a=>{
+        const matches=(a.title+" "+a.subject+" "+a.notes+" "+a.category).toLowerCase().includes(query);
+        const diff=Math.round((dateOnly(a.dueDate)-dateOnly(todayString()))/86400000);
+        const matchesFilter=filter==="all" || (filter==="active"&&!a.completed) || (filter==="completed"&&a.completed) ||
+          (filter==="upcoming"&&!a.completed&&diff>=0&&diff<=7) || (filter==="overdue"&&!a.completed&&diff<0);
+        return matches&&matchesFilter;
+      });
+      shown.sort((a,b)=>{
+        if(sort==="priority") return ({High:0,Medium:1,Low:2}[a.priority]-({High:0,Medium:1,Low:2}[b.priority])) || a.dueDate.localeCompare(b.dueDate);
+        if(sort==="newest") return b.createdAt-a.createdAt;
+        return a.dueDate.localeCompare(b.dueDate) || b.createdAt-a.createdAt;
+      });
+      $("visibleCount").textContent=`${shown.length} shown`;
+      if(!shown.length) {
+        $("assignmentList").innerHTML=`<div class="empty">${total===0?"No assignments yet. Add your first one on the left!":"No assignments match this view."}</div>`;
+        return;
+      }
+      $("assignmentList").innerHTML=shown.map(a=>{
+        const status=dueStatus(a);
+        return `<article class="assignment ${a.completed?"completed":""}">
+          <input class="check" type="checkbox" aria-label="Mark ${escapeHtml(a.title)} completed" data-action="toggle" data-id="${a.id}" ${a.completed?"checked":""}>
+          <div>
+            <h3>${escapeHtml(a.title)}</h3>
+            <p>${escapeHtml([a.subject,a.category].filter(Boolean).join(" · "))}${a.notes?"\n"+escapeHtml(a.notes):""}</p>
+            <div class="meta"><span class="pill ${status.cls}">${status.text}</span><span class="pill">${escapeHtml(a.priority)} priority</span></div>
+          </div>
+          <div class="actions"><button class="icon-btn" data-action="edit" data-id="${a.id}" aria-label="Edit assignment">Edit</button><button class="icon-btn" data-action="delete" data-id="${a.id}" aria-label="Delete assignment">×</button></div>
+        </article>`;
+      }).join("");
+    }
+    function resetForm() {
+      editingId=null; $("assignmentForm").reset(); $("priority").value="Medium";
+      $("formHeading").textContent="＋ Add an assignment"; $("submitBtn").textContent="Add assignment";
+      $("cancelEdit").style.display="none"; $("dueDate").value=todayString();
+    }
+    $("assignmentForm").addEventListener("submit",e=>{
+      e.preventDefault();
+      const item={title:$("title").value.trim(),subject:$("subject").value.trim(),dueDate:$("dueDate").value,
+        priority:$("priority").value,category:$("category").value,notes:$("notes").value.trim()};
+      if(!item.title||!item.dueDate) return;
+      if(editingId) {
+        assignments=assignments.map(a=>a.id===editingId?{...a,...item}:a);
+      } else {
+        assignments.push({...item,id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),completed:false,createdAt:Date.now()});
+      }
+      save();resetForm();render();
+    });
+    $("cancelEdit").addEventListener("click",resetForm);
+    $("assignmentList").addEventListener("click",e=>{
+      const btn=e.target.closest("[data-action]"); if(!btn) return;
+      const item=assignments.find(a=>a.id===btn.dataset.id); if(!item) return;
+      if(btn.dataset.action==="toggle") { item.completed=btn.checked; save();render(); }
+      if(btn.dataset.action==="edit") {
+        editingId=item.id;
+        $("title").value=item.title;$("subject").value=item.subject;$("dueDate").value=item.dueDate;
+        $("priority").value=item.priority;$("category").value=item.category;$("notes").value=item.notes;
+        $("formHeading").textContent="✎ Edit assignment";$("submitBtn").textContent="Save changes";
+        $("cancelEdit").style.display="block";window.scrollTo({top:0,behavior:"smooth"});
+      }
+      if(btn.dataset.action==="delete" && confirm(`Delete "${item.title}"?`)) {
+        assignments=assignments.filter(a=>a.id!==item.id);save();render();
+      }
+    });
+    ["search","filter","sort"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+    $("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+    $("dueDate").value=todayString();
+    render();
+    if("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+    }
+  </script>
+</body>
+</html>
